@@ -1,0 +1,260 @@
+mysql> create database mdb;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> use mdb;
+Database changed
+
+mysql> create table student(id int primary key auto_increment, name varchar(50), age int, marks int);
+Query OK, 0 rows affected (0.08 sec)
+
+mysql> describe student;
++-------+-------------+------+-----+---------+----------------+
+| Field | Type        | Null | Key | Default | Extra          |
++-------+-------------+------+-----+---------+----------------+
+| id    | int         | NO   | PRI | NULL    | auto_increment |
+| name  | varchar(50) | YES  |     | NULL    |                |
+| age   | int         | YES  |     | NULL    |                |
+| marks | int         | YES  |     | NULL    |                |
++-------+-------------+------+-----+---------+----------------+
+4 rows in set (0.00 sec)
+
+mysql> insert into student( name, age, marks) values ("Parth", 21, 250),
+    -> ("Krupesh", 20, 350),
+    -> ("Rudra", 24, 275),
+    -> ("Vidhi", 20, 290);
+Query OK, 4 rows affected (0.01 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   350 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
++----+---------+------+-------+
+4 rows in set (0.00 sec)
+
+mysql> create table studentMarks(average_marks float);
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> insert into studentMarks select avg(marks) from student;
+Query OK, 1 row affected (0.01 sec)
+Records: 1  Duplicates: 0  Warnings: 0
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|        291.25 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> insert into student(name, age, marks) values ("Nandini", 20, 280);
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|        291.25 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> delimiter //
+mysql> create trigger student_bi before insert on student
+    -> for each row
+    -> if new.age < 18 then
+    -> signal sqlstate '50001' set message_text = "Age is below 18 Years";
+    -> end if
+    -> //
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> delimiter ;
+mysql> insert into student(name, age, marks) values
+    -> ("Sakshi", 17, 280);
+ERROR 1644 (50001): Age is below 18 Years
+
+mysql> insert into student(name, age, marks) values
+    -> ("Sakshi", 24, 280);
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   350 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
++----+---------+------+-------+
+6 rows in set (0.00 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|        291.25 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> delimiter ;
+mysql> ^C
+mysql> delimiter //
+mysql> create trigger student_ai after insert on student
+    -> for each row
+    -> update studentMarks set average_marks = (select avg(marks) from student);
+    -> //
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> delimiter ;
+mysql> insert into student(name, age, marks) values
+    -> ("Divya", 24, 280);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   350 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
+|  7 | Divya   |   24 |   280 |
++----+---------+------+-------+
+7 rows in set (0.00 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|       286.429 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> insert into student(name, age, marks) values
+    -> ("Ram", 24, 280);
+Query OK, 1 row affected (0.01 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|       285.625 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   350 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
+|  7 | Divya   |   24 |   280 |
+|  8 | Ram     |   24 |   280 |
++----+---------+------+-------+
+8 rows in set (0.00 sec)
+
+mysql> update student set marks = 270 where id = 2;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   270 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
+|  7 | Divya   |   24 |   280 |
+|  8 | Ram     |   24 |   280 |
++----+---------+------+-------+
+8 rows in set (0.00 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|       285.625 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> update student set age = 21 where id = 7;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   270 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
+|  7 | Divya   |   21 |   280 |
+|  8 | Ram     |   24 |   280 |
++----+---------+------+-------+
+8 rows in set (0.00 sec)
+
+mysql> select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|       285.625 |
++---------------+
+1 row in set (0.00 sec)
+
+mysql> update student set age = 12 where id = 7;
+Query OK, 1 row affected (0.01 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from student;
++----+---------+------+-------+
+| id | name    | age  | marks |
++----+---------+------+-------+
+|  1 | Parth   |   21 |   250 |
+|  2 | Krupesh |   20 |   270 |
+|  3 | Rudra   |   24 |   275 |
+|  4 | Vidhi   |   20 |   290 |
+|  5 | Nandini |   20 |   280 |
+|  6 | Sakshi  |   24 |   280 |
+|  7 | Divya   |   12 |   280 |
+|  8 | Ram     |   24 |   280 |
++----+---------+------+-------+
+8 rows in set (0.00 sec)
+
+mysql> Select * from studentMarks;
++---------------+
+| average_marks |
++---------------+
+|       285.625 |
++---------------+
+1 row in set (0.00 sec)
+
+
+mysql> delimiter //
+mysql> create trigger student_bu before update on student
+    -> for each row
+    -> if new.age < 18 then
+    -> signal sqlstate '50002' set message_text = "Age should be above 18 years";
+    -> end if;
+    -> //
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> delimiter ;
+mysql> update student set age = 12 where id = 7;
+ERROR 1644 (50002): Age should be above 18 years
